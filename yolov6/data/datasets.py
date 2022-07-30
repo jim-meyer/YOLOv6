@@ -31,6 +31,10 @@ from yolov6.utils.events import LOGGER
 # Parameters
 IMG_FORMATS = ["bmp", "jpg", "jpeg", "png", "tif", "tiff", "dng", "webp", "mpo"]
 VID_FORMATS = ["mp4", "mov", "avi", "mkv"]
+# JIMM BEGIN
+IMG_FORMATS.extend([f.upper() for f in IMG_FORMATS])
+VID_FORMATS.extend([f.upper() for f in VID_FORMATS])
+# JIMM END
 # Get orientation exif tag
 for k, v in ExifTags.TAGS.items():
     if v == "Orientation":
@@ -559,7 +563,7 @@ class LoadData:
     def __init__(self, path):
         p = str(Path(path).resolve())  # os-agnostic absolute path
         if os.path.isdir(p):
-            files = sorted(glob.glob(os.path.join(p, '*.*')))  # dir
+            files = sorted(glob.glob(os.path.join(p, '**/*.*'), recursive=True))  # dir
         elif os.path.isfile(p):
             files = [p]  # files
         else:
