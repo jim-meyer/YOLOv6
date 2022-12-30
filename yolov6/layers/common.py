@@ -4,6 +4,12 @@
 import warnings
 from pathlib import Path
 
+try:
+    from torch_ort import ORTInferenceModule
+    ORT_AVAILABLE = True
+except ImportError:
+    ORT_AVAILABLE = False
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -546,6 +552,8 @@ class DetectBackend(nn.Module):
         from yolov6.utils.checkpoint import load_checkpoint
         model = load_checkpoint(weights, map_location=device)
         stride = int(model.stride.max())
+        # if ORT_AVAILABLE:
+        #     model = ORTInferenceModule(model)
         self.__dict__.update(locals())  # assign all variables to self
 
     def forward(self, im, val=False):

@@ -20,6 +20,9 @@ from yolov6.data.datasets import LoadData
 from yolov6.utils.nms import non_max_suppression
 from yolov6.utils.torch_utils import get_model_info
 
+NUM_WARMUPS = 10
+
+
 class Inferer:
     def __init__(self, source, weights, device, yaml, img_size, half):
 
@@ -67,6 +70,10 @@ class Inferer:
         ''' Model Inference and results visualization '''
         vid_path, vid_writer, windows = None, None, []
         fps_calculator = CalcFPS()
+        # JIMM BEGIN
+        total_inf_time = 0.0
+        num_processed = 0
+        # JIMM END
         for img_src, img_path, vid_cap in tqdm(self.files):
             img, img_src = self.precess_image(img_src, self.img_size, self.stride, self.half)
             img = img.to(self.device)
@@ -83,7 +90,7 @@ class Inferer:
             save_path = osp.join(save_dir, rel_path, osp.basename(img_path))  # im.jpg
             txt_path = osp.join(save_dir, rel_path, osp.splitext(osp.basename(img_path))[0])
             os.makedirs(osp.join(save_dir, rel_path), exist_ok=True)
-            # JIMM BEGIN
+            # JIMM END
             #save_path = osp.join(save_dir, osp.basename(img_path))  # im.jpg
             #txt_path = osp.join(save_dir, 'labels', osp.splitext(osp.basename(img_path))[0])
 
@@ -114,6 +121,10 @@ class Inferer:
             # FPS counter
             fps_calculator.update(1.0 / (t2 - t1))
             avg_fps = fps_calculator.accumulate()
+            num_processed += 1
+            if num_processed > NUM_WARMUPS:
+                total_inf_time += (t2 - t1)
+            #print(f'Avg FPS = {avg_fps}')
 
             if self.files.type == 'video':
                 self.draw_text(
@@ -152,6 +163,7 @@ class Inferer:
                         save_path = str(Path(save_path).with_suffix('.mp4'))  # force *.mp4 suffix on results videos
                         vid_writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
                     vid_writer.write(img_src)
+        print(f'Average inference time = {total_inf_time * 1000 / (len(self.files) - NUM_WARMUPS):0.2f}ms')
 
     @staticmethod
     def precess_image(img_src, img_size, stride, half):

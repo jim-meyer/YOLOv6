@@ -17,7 +17,7 @@ def main(args):
         label_map[class_id] = classname
 
     for file in os.listdir(img_dir):
-        if file.split('.')[-1] not in IMG_FORMATS:
+        if file.split('.')[-1].lower() not in IMG_FORMATS:
             print(f'[Warning]: Non-image file {file}')
             continue
         img_path = os.path.join(img_dir, file)

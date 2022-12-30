@@ -1,0 +1,18 @@
+is_coco: false
+names:
+- Bobcat
+- Coyote
+- Deer
+- DeerBuck
+- DeerDoe
+- Possum
+- Rabbit
+- Raccoon
+- Squirrel
+- Turkey
+- DeerBuckHead
+nc: 11
+path: /Users/jimmeyer/ml/images/trailcam_trailcam_11_class_12_28_2022_yolov6s
+test: /Users/jimmeyer/ml/images/trailcam_trailcam_11_class_12_28_2022_yolov6s/images/test
+train: /Users/jimmeyer/ml/images/trailcam_trailcam_11_class_12_28_2022_yolov6s/images/train
+val: /Users/jimmeyer/ml/images/trailcam_trailcam_11_class_12_28_2022_yolov6s/images/val

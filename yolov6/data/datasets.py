@@ -31,10 +31,6 @@ from yolov6.utils.events import LOGGER
 # Parameters
 IMG_FORMATS = ["bmp", "jpg", "jpeg", "png", "tif", "tiff", "dng", "webp", "mpo"]
 VID_FORMATS = ["mp4", "mov", "avi", "mkv"]
-# JIMM BEGIN
-IMG_FORMATS.extend([f.upper() for f in IMG_FORMATS])
-VID_FORMATS.extend([f.upper() for f in VID_FORMATS])
-# JIMM END
 # Get orientation exif tag
 for k, v in ExifTags.TAGS.items():
     if v == "Orientation":
@@ -569,8 +565,8 @@ class LoadData:
         else:
             raise FileNotFoundError(f'Invalid path {p}')
 
-        imgp = [i for i in files if i.split('.')[-1] in IMG_FORMATS]
-        vidp = [v for v in files if v.split('.')[-1] in VID_FORMATS]
+        imgp = [i for i in files if i.split('.')[-1].lower() in IMG_FORMATS]
+        vidp = [v for v in files if v.split('.')[-1].lower() in VID_FORMATS]
         self.files = imgp + vidp
         self.nf = len(self.files)
         self.type = 'image'

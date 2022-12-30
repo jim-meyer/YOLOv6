@@ -1,0 +1,50 @@
+version: '3'
+services:
+  yolov6:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/YOLOv6
+      - ~/ml:/ml
+      - ~/models:/models
+      # for some unexplainable reason, if this is added in the
+      # device section instead of volumes, then the docker dont work and cannot
+      # read the MYRIAD device...
+      # The way that docker works is as:
+      # docker run -it --rm --device-cgroup-rule='c 189:* rmw' -v /dev/bus/usb:/dev/bus/usb -v $(pwd):/sdk_library sdk_library_devbuild bas
+      # explained in the official doc:
+      # https://docs.openvinotoolkit.org/latest/openvino_docs_install_guides_installing_openvino_docker_linux.html#build_and_run_the_docker_image_for_intel_neural_compute_stick_2
+      # the difference is the -v (volumes)
+      - '/dev/bus/usb:/dev/bus/usb'
+    # this is required by the openvino framework to read the USB
+    # and also requires updating the docker-compose version (one used that works
+    # is docker-compose version 1.29.2, build 5becea4c)
+    device_cgroup_rules:
+      - 'c 189:* rmw'
+    # for openvino we need to have access to the usb
+    # and we need to provide the c_group rules
+  openvino_ncs:
+    build:
+      context: .
+      dockerfile: Dockerfile_openvino_ncs
+    volumes:
+      - .:/YOLOv6
+      - ~/ml:/ml
+      - ~/models:/models
+      # for some unexplainable reason, if this is added in the
+      # device section instead of volumes, then the docker dont work and cannot
+      # read the MYRIAD device...
+      # The way that docker works is as:
+      # docker run -it --rm --device-cgroup-rule='c 189:* rmw' -v /dev/bus/usb:/dev/bus/usb -v $(pwd):/sdk_library sdk_library_devbuild bas
+      # explained in the official doc:
+      # https://docs.openvinotoolkit.org/latest/openvino_docs_install_guides_installing_openvino_docker_linux.html#build_and_run_the_docker_image_for_intel_neural_compute_stick_2
+      # the difference is the -v (volumes)
+      - '/dev/bus/usb:/dev/bus/usb'
+    # this is required by the openvino framework to read the USB
+    # and also requires updating the docker-compose version (one used that works
+    # is docker-compose version 1.29.2, build 5becea4c)
+    device_cgroup_rules:
+      - 'c 189:* rmw'
+    # for openvino we need to have access to the usb
+    # and we need to provide the c_group rules
