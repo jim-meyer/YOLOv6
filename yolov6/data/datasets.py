@@ -440,13 +440,16 @@ class TrainValDataset(Dataset):
             msg = f"WARNING: {im_file}: ignoring corrupt image - im.verify(): {e}"
             return im_file, None, nc, msg
 
+        shape = im.size  # (width, height)
         try:
-            shape = im.size  # (width, height)
             im_exif = im._getexif()
         except Exception as e:
-            nc = 1
-            msg = f"WARNING: {im_file}: ignoring corrupt image - im._getexif(): {e}"
-            return im_file, None, nc, msg
+            # JIMM: disabled this since it was causing many .png files to be thrown out that were "valid" (ok, "loadable")
+            # images. e.g.
+            #   WARNING: /home/ubuntu/ml/images/trailcam_yolov6/images/train/scraped_aug_2022/automated/i157.photobucket.com/albums/t66/PHhunter/big8_zpscdcea226.png: ignoring corrupt image: 'NoneType' object has no attribute 'seek'
+            # nc = 1
+            # msg = f"WARNING: {im_file}: ignoring corrupt image - im._getexif(): {e}"
+            return im_file, shape, nc, msg
 
         try:
             if im_exif and ORIENTATION in im_exif:
@@ -456,17 +459,14 @@ class TrainValDataset(Dataset):
 
             assert (shape[0] > 9) & (shape[1] > 9), f"image size {shape} <10 pixels"
             assert im.format.lower() in IMG_FORMATS, f"invalid image format {im.format}"
-            # JIMM: disabled this since it was causing many .png files to be thrown out that were "valid" (ok, "loadable")
-            # images. e.g.
-            #   WARNING: /home/ubuntu/ml/images/trailcam_yolov6/images/train/scraped_aug_2022/automated/i157.photobucket.com/albums/t66/PHhunter/big8_zpscdcea226.png: ignoring corrupt image: 'NoneType' object has no attribute 'seek'
-            # if im.format.lower() in ("jpg", "jpeg"):
-            #     with open(im_file, "rb") as f:
-            #         f.seek(-2, 2)
-            #         if f.read() != b"\xff\xd9":  # corrupt JPEG
-            #             ImageOps.exif_transpose(Image.open(im_file)).save(
-            #                 im_file, "JPEG", subsampling=0, quality=100
-            #             )
-            #             msg += f"WARNING: {im_file}: corrupt JPEG restored and saved"
+            if im.format.lower() in ("jpg", "jpeg"):
+                with open(im_file, "rb") as f:
+                    f.seek(-2, 2)
+                    if f.read() != b"\xff\xd9":  # corrupt JPEG
+                        ImageOps.exif_transpose(Image.open(im_file)).save(
+                            im_file, "JPEG", subsampling=0, quality=100
+                        )
+                        msg += f"WARNING: {im_file}: corrupt JPEG restored and saved"
             return im_file, shape, nc, msg
         except Exception as e:
             nc = 1
