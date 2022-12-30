@@ -428,9 +428,27 @@ class TrainValDataset(Dataset):
         nc, msg = 0, ""
         try:
             im = Image.open(im_file)
+        except Exception as e:
+            nc = 1
+            msg = f"WARNING: {im_file}: ignoring corrupt image - Image.open(): {e}"
+            return im_file, None, nc, msg
+
+        try:
             im.verify()  # PIL verify
+        except Exception as e:
+            nc = 1
+            msg = f"WARNING: {im_file}: ignoring corrupt image - im.verify(): {e}"
+            return im_file, None, nc, msg
+
+        try:
             shape = im.size  # (width, height)
             im_exif = im._getexif()
+        except Exception as e:
+            nc = 1
+            msg = f"WARNING: {im_file}: ignoring corrupt image - im._getexif(): {e}"
+            return im_file, None, nc, msg
+
+        try:
             if im_exif and ORIENTATION in im_exif:
                 rotation = im_exif[ORIENTATION]
                 if rotation in (6, 8):
