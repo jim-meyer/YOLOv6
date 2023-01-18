@@ -103,18 +103,30 @@ class Inferer:
 
             if len(det):
                 det[:, :4] = self.rescale(img.shape[2:], det[:, :4], img_src.shape).round()
+                # JIMM BEGIN
+                txt_lines = []
+                # JIMM END
                 for *xyxy, conf, cls in reversed(det):
                     if save_txt:  # Write to file
                         xywh = (self.box_convert(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
                         line = (cls, *xywh, conf)
-                        with open(txt_path + '.txt', 'a') as f:
-                            f.write(('%g ' * len(line)).rstrip() % line + '\n')
+                        # JIMM BEGIN
+                        txt_lines.append(('%g ' * len(line)).rstrip() % line + '\n')
+                        # This logic is flawed in that if inference was run >1 times then the duplicate predictions would keep getting appended to the file
+                        # with open(txt_path + '.txt', 'a') as f:
+                        #     f.write(('%g ' * len(line)).rstrip() % line + '\n')
+                        # JIMM END
 
                     if save_img:
                         class_num = int(cls)  # integer class
                         label = None if hide_labels else (self.class_names[class_num] if hide_conf else f'{self.class_names[class_num]} {conf:.2f}')
 
                         self.plot_box_and_label(img_ori, max(round(sum(img_ori.shape) / 2 * 0.003), 2), xyxy, label, color=self.generate_colors(class_num, True))
+                # JIMM BEGIN
+                if save_txt:
+                    with open(txt_path + '.txt', 'w') as f:
+                        f.writelines(txt_lines)
+                # JIMM END
 
                 img_src = np.asarray(img_ori)
 
