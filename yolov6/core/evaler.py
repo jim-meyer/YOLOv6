@@ -31,7 +31,8 @@ class Evaler:
                  iou_thres=0.65,
                  device='',
                  half=True,
-                 save_dir=''):
+                 save_dir='',
+                 workers=8):
         self.data = data
         self.batch_size = batch_size
         self.img_size = img_size
@@ -40,6 +41,9 @@ class Evaler:
         self.device = device
         self.half = half
         self.save_dir = save_dir
+        # JIMM BEGIN
+        self.workers = workers
+        # JIMM END
 
     def init_model(self, model, weights, task):
         if task != 'train':
@@ -67,7 +71,7 @@ class Evaler:
             pad = 0.0 if task == 'speed' else 0.5
             dataloader = create_dataloader(self.data[task if task in ('train', 'val', 'test') else 'val'],
                                            self.img_size, self.batch_size, self.stride, check_labels=True, pad=pad, rect=True,
-                                           data_dict=self.data, task=task)[0]
+                                           data_dict=self.data, task=task, workers=self.workers)[0]
         return dataloader
 
     def predict_model(self, model, dataloader, task):
@@ -138,6 +142,9 @@ class Evaler:
                 imgIds = [int(os.path.basename(x).split(".")[0])
                             for x in dataloader.dataset.img_paths]
                 cocoEval.params.imgIds = imgIds
+            # JIMM BEGIN
+            # cocoEval.params.catIds = [10]    # 3 = DeerBuck, 10 = DeerBuckHead
+            # JIMM END
             cocoEval.evaluate()
             cocoEval.accumulate()
             cocoEval.summarize()
@@ -151,7 +158,7 @@ class Evaler:
 
     def eval_speed(self, task):
         '''Evaluate model inference speed.'''
-        if task != 'train':
+        if task == 'speed':
             n_samples = self.speed_result[0].item()
             pre_time, inf_time, nms_time = 1000 * self.speed_result[1:].cpu().numpy() / n_samples
             for n, v in zip(["pre-process", "inference", "NMS"],[pre_time, inf_time, nms_time]):

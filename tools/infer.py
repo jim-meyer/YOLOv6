@@ -95,6 +95,7 @@ def run(weights=osp.join(ROOT, 'yolov6s.pt'),
         os.makedirs(save_dir)
     else:
         LOGGER.warning('Save directory already existed')
+        LOGGER.warning('Save directory already existed')
     if save_txt:
         if not osp.exists(save_txt_path):
             os.makedirs(save_txt_path)

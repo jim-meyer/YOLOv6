@@ -28,6 +28,9 @@ def get_args_parser(add_help=True):
     parser.add_argument('--half', default=False, action='store_true', help='whether to use fp16 infer')
     parser.add_argument('--save_dir', type=str, default='runs/val/', help='evaluation save dir')
     parser.add_argument('--name', type=str, default='exp', help='save evaluation results to save_dir/name')
+    # JIMM BEGIN
+    parser.add_argument('--workers', default=8, type=int, help='number of data loading workers (default: 8)')
+    # JIMM END
     args = parser.parse_args()
     LOGGER.info(args)
     return args
@@ -46,7 +49,10 @@ def run(data,
         model=None,
         dataloader=None,
         save_dir='',
-        name = ''
+        name = '',
+        # JIMM BEGIN
+        workers=8
+        # JIMM END
         ):
     """ Run the evaluation process
 
@@ -73,13 +79,24 @@ def run(data,
 
     # init
     val = Evaler(data, batch_size, img_size, conf_thres, \
-                iou_thres, device, half, save_dir)
+                iou_thres, device, half, save_dir, workers=workers)
     model = val.init_model(model, weights, task)
     dataloader = val.init_data(dataloader, task)
 
     # eval
     model.eval()
+    # JIMM BEGIN
+    # pred_json = os.path.join(save_dir, 'predictions.json')
+    # if os.path.isfile(pred_json):
+    #     import json
+    #     with open(pred_json, 'r') as f:
+    #         pred_result = json.load(f)
+    #     vis_outputs, vis_paths = None, None
+    #       NOTE: Not sure what I was thinking with this patch but vis_outputs, vis_paths being None causes exceptions upstream
+    # else:
+    #     pred_result, vis_outputs, vis_paths = val.predict_model(model, dataloader, task)
     pred_result, vis_outputs, vis_paths = val.predict_model(model, dataloader, task)
+    # JIMM END
     eval_result = val.eval_model(pred_result, model, dataloader, task)
     return eval_result, vis_outputs, vis_paths
 
