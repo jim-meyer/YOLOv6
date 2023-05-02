@@ -19,14 +19,14 @@ thop  # FLOPs computation
 # pytorch_quantization>=2.1.1
 
 # JIMM BEGIN
-matplotlib>=3.2.2
-Pillow>=7.1.2
-requests>=2.23.0
-protobuf<4.21.3
-pandas>=1.1.4
-seaborn>=0.11.0
-
-setuptools==59.5.0
+# matplotlib>=3.2.2
+# Pillow>=7.1.2
+# requests>=2.23.0
+# protobuf<4.21.3
+# pandas>=1.1.4
+# seaborn>=0.11.0
+#
+# setuptools==59.5.0
 
 # torch-ort-infer==1.12.0
 # openvino==2022.1.0
