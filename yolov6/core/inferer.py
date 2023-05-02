@@ -24,7 +24,7 @@ NUM_WARMUPS = 10
 
 
 class Inferer:
-    def __init__(self, source, weights, device, yaml, img_size, half):
+    def __init__(self, source, webcam, webcam_addr, weights, device, yaml, img_size, half):
 
         self.__dict__.update(locals())
 
@@ -37,25 +37,27 @@ class Inferer:
         self.stride = self.model.stride
         self.class_names = load_yaml(yaml)['names']
         self.img_size = self.check_img_size(self.img_size, s=self.stride)  # check image size
+        self.half = half
+
+        # Switch model to deploy status
+        self.model_switch(self.model.model, self.img_size)
 
         # Half precision
-        if half & (self.device.type != 'cpu'):
+        if self.half & (self.device.type != 'cpu'):
             self.model.model.half()
         else:
             self.model.model.float()
-            half = False
+            self.half = False
 
         if self.device.type != 'cpu':
             self.model(torch.zeros(1, 3, *self.img_size).to(self.device).type_as(next(self.model.model.parameters())))  # warmup
 
         # Load data
-        self.files = LoadData(source)
-        # JIMM BEGIN
+        self.webcam = webcam
+        self.webcam_addr = webcam_addr
+        self.files = LoadData(source, webcam, webcam_addr)
         self.source = source
-        # JIMM END
 
-        # Switch model to deploy status
-        self.model_switch(self.model.model, self.img_size)
 
     def model_switch(self, model, img_size):
         ''' Model switch to deploy status '''
@@ -63,6 +65,8 @@ class Inferer:
         for layer in model.modules():
             if isinstance(layer, RepVGGBlock):
                 layer.switch_to_deploy()
+            elif isinstance(layer, torch.nn.Upsample) and not hasattr(layer, 'recompute_scale_factor'):
+                layer.recompute_scale_factor = None  # torch 1.11.0 compatibility
 
         LOGGER.info("Switch model to deploy modality.")
 
@@ -75,7 +79,7 @@ class Inferer:
         num_processed = 0
         # JIMM END
         for img_src, img_path, vid_cap in tqdm(self.files):
-            img, img_src = self.precess_image(img_src, self.img_size, self.stride, self.half)
+            img, img_src = self.process_image(img_src, self.img_size, self.stride, self.half)
             img = img.to(self.device)
             if len(img.shape) == 3:
                 img = img[None]
@@ -85,14 +89,15 @@ class Inferer:
             det = non_max_suppression(pred_results, conf_thres, iou_thres, classes, agnostic_nms, max_det=max_det)[0]
             t2 = time.time()
 
-            # JIMM BEGIN
-            rel_path = osp.relpath(osp.dirname(img_path), self.source)
-            save_path = osp.join(save_dir, rel_path, osp.basename(img_path))  # im.jpg
-            txt_path = osp.join(save_dir, rel_path, osp.splitext(osp.basename(img_path))[0])
-            os.makedirs(osp.join(save_dir, rel_path), exist_ok=True)
-            # JIMM END
-            #save_path = osp.join(save_dir, osp.basename(img_path))  # im.jpg
-            #txt_path = osp.join(save_dir, 'labels', osp.splitext(osp.basename(img_path))[0])
+            if self.webcam:
+                save_path = osp.join(save_dir, self.webcam_addr)
+                txt_path = osp.join(save_dir, self.webcam_addr)
+            else:
+                # Create output files in nested dirs that mirrors the structure of the images' dirs
+                rel_path = osp.relpath(osp.dirname(img_path), osp.dirname(self.source))
+                save_path = osp.join(save_dir, rel_path, osp.basename(img_path))  # im.jpg
+                txt_path = osp.join(save_dir, rel_path, 'labels', osp.splitext(osp.basename(img_path))[0])
+                os.makedirs(osp.join(save_dir, rel_path), exist_ok=True)
 
             gn = torch.tensor(img_src.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             img_ori = img_src.copy()
@@ -178,7 +183,7 @@ class Inferer:
         print(f'Average inference time = {total_inf_time * 1000 / (len(self.files) - NUM_WARMUPS):0.2f}ms')
 
     @staticmethod
-    def precess_image(img_src, img_size, stride, half):
+    def process_image(img_src, img_size, stride, half):
         '''Process image before image inference.'''
         image = letterbox(img_src, img_size, stride=stride)[0]
         # Convert
@@ -256,7 +261,7 @@ class Inferer:
         return text_size
 
     @staticmethod
-    def plot_box_and_label(image, lw, box, label='', color=(128, 128, 128), txt_color=(255, 255, 255)):
+    def plot_box_and_label(image, lw, box, label='', color=(128, 128, 128), txt_color=(255, 255, 255), font=cv2.FONT_HERSHEY_COMPLEX):
         # Add one xyxy box to image with label
         p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
         cv2.rectangle(image, p1, p2, color, thickness=lw, lineType=cv2.LINE_AA)
@@ -266,7 +271,7 @@ class Inferer:
             outside = p1[1] - h - 3 >= 0  # label fits outside box
             p2 = p1[0] + w, p1[1] - h - 3 if outside else p1[1] + h + 3
             cv2.rectangle(image, p1, p2, color, -1, cv2.LINE_AA)  # filled
-            cv2.putText(image, label, (p1[0], p1[1] - 2 if outside else p1[1] + h + 2), 0, lw / 3, txt_color,
+            cv2.putText(image, label, (p1[0], p1[1] - 2 if outside else p1[1] + h + 2), font, lw / 3, txt_color,
                         thickness=tf, lineType=cv2.LINE_AA)
 
     @staticmethod

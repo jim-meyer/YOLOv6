@@ -10,7 +10,7 @@ model = dict(
         out_channels=[64, 128, 256, 512, 1024],
         ),
     neck=dict(
-        type='RepPAN',
+        type='RepPANNeck',
         num_repeats=[12, 12, 12, 12],
         out_channels=[256, 128, 128, 256, 256, 512],
         ),
@@ -22,7 +22,10 @@ model = dict(
         anchors=1,
         out_indices=[17, 20, 23],
         strides=[8, 16, 32],
-        iou_type='siou'
+        atss_warmup_epoch=0,
+        iou_type='giou',
+        use_dfl=False,
+        reg_max=0
     )
 )
 
