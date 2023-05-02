@@ -452,6 +452,13 @@ class TrainValDataset(Dataset):
         nc, msg = 0, ""
         try:
             im = Image.open(im_file)
+        # JIMM BEGIN
+        except Exception as e:
+            nc = 1
+            msg = f"WARNING: {im_file}: ignoring corrupt image - Image.open(): {e}"
+            return im_file, None, nc, msg
+        try:
+        # JIMM END
             im.verify()  # PIL verify
             im = Image.open(im_file)  # need to reload the image after using verify()
             shape = im.size  # (width, height)

@@ -20,6 +20,9 @@ from yolov6.data.datasets import LoadData
 from yolov6.utils.nms import non_max_suppression
 from yolov6.utils.torch_utils import get_model_info
 
+NUM_WARMUPS = 10
+
+
 class Inferer:
     def __init__(self, source, webcam, webcam_addr, weights, device, yaml, img_size, half):
 
@@ -69,6 +72,10 @@ class Inferer:
         ''' Model Inference and results visualization '''
         vid_path, vid_writer, windows = None, None, []
         fps_calculator = CalcFPS()
+        # JIMM BEGIN
+        total_inf_time = 0.0
+        num_processed = 0
+        # JIMM END
         for img_src, img_path, vid_cap in tqdm(self.files):
             img, img_src = self.process_image(img_src, self.img_size, self.stride, self.half)
             img = img.to(self.device)
@@ -99,12 +106,19 @@ class Inferer:
 
             if len(det):
                 det[:, :4] = self.rescale(img.shape[2:], det[:, :4], img_src.shape).round()
+                # JIMM BEGIN
+                txt_lines = []
+                # JIMM END
                 for *xyxy, conf, cls in reversed(det):
                     if save_txt:  # Write to file
                         xywh = (self.box_convert(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
                         line = (cls, *xywh, conf)
-                        with open(txt_path + '.txt', 'a') as f:
-                            f.write(('%g ' * len(line)).rstrip() % line + '\n')
+                        # JIMM BEGIN
+                        txt_lines.append(('%g ' * len(line)).rstrip() % line + '\n')
+                        # This logic is flawed in that if inference was run >1 times then the duplicate predictions would keep getting appended to the file
+                        # with open(txt_path + '.txt', 'a') as f:
+                        #     f.write(('%g ' * len(line)).rstrip() % line + '\n')
+                        # JIMM END
 
                     if save_img:
                         class_num = int(cls)  # integer class
@@ -112,11 +126,23 @@ class Inferer:
 
                         self.plot_box_and_label(img_ori, max(round(sum(img_ori.shape) / 2 * 0.003), 2), xyxy, label, color=self.generate_colors(class_num, True))
 
+                # JIMM BEGIN
+                if save_txt:
+                    with open(txt_path + '.txt', 'w') as f:
+                        f.writelines(txt_lines)
+                # JIMM END
+
                 img_src = np.asarray(img_ori)
 
             # FPS counter
             fps_calculator.update(1.0 / (t2 - t1))
             avg_fps = fps_calculator.accumulate()
+            # JIMM BEGIN
+            num_processed += 1
+            if num_processed > NUM_WARMUPS:
+                total_inf_time += (t2 - t1)
+            #print(f'Avg FPS = {avg_fps}')
+            # JIMM END
 
             if self.files.type == 'video':
                 self.draw_text(
@@ -155,6 +181,9 @@ class Inferer:
                         save_path = str(Path(save_path).with_suffix('.mp4'))  # force *.mp4 suffix on results videos
                         vid_writer = cv2.VideoWriter(save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (w, h))
                     vid_writer.write(img_src)
+        # JIMM BEGIN
+        print(f'Average inference time = {total_inf_time * 1000 / (len(self.files) - NUM_WARMUPS):0.2f}ms')
+        # JIMM END
 
     @staticmethod
     def process_image(img_src, img_size, stride, half):

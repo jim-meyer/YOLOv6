@@ -39,7 +39,8 @@ class Evaler:
                  do_coco_metric=True,
                  do_pr_metric=False,
                  plot_curve=True,
-                 plot_confusion_matrix=False
+                 plot_confusion_matrix=False,
+                 workers=8
                  ):
         assert do_pr_metric or do_coco_metric, 'ERROR: at least set one val metric'
         self.data = data
@@ -57,6 +58,9 @@ class Evaler:
         self.do_pr_metric = do_pr_metric
         self.plot_curve = plot_curve
         self.plot_confusion_matrix = plot_confusion_matrix
+        # JIMM BEGIN
+        self.workers = workers
+        # JIMM END
 
     def init_model(self, model, weights, task):
         if task != 'train':

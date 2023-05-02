@@ -33,6 +33,9 @@ def get_args_parser(add_help=True):
     parser.add_argument('--half', default=False, action='store_true', help='whether to use fp16 infer')
     parser.add_argument('--save_dir', type=str, default='runs/val/', help='evaluation save dir')
     parser.add_argument('--name', type=str, default='exp', help='save evaluation results to save_dir/name')
+    # JIMM BEGIN
+    parser.add_argument('--workers', default=8, type=int, help='number of data loading workers (default: 8)')
+    # JIMM END
     parser.add_argument('--shrink_size', type=int, default=0, help='load img resize when test')
     parser.add_argument('--infer_on_rect', default=True, type=boolean_string, help='default to run with rectangle image to boost speed.')
     parser.add_argument('--reproduce_640_eval', default=False, action='store_true', help='whether to reproduce 640 infer result, overwrite some config')
@@ -108,6 +111,9 @@ def run(data,
         plot_curve=False,
         plot_confusion_matrix=False,
         config_file=None,
+        # JIMM BEGIN
+        workers=8
+        # JIMM END
         ):
     """ Run the evaluation process
 
