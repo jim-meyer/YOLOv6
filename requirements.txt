@@ -12,10 +12,13 @@ addict>=2.4.0
 tensorboard>=2.7.0
 pycocotools>=2.0
 onnx>=1.10.0  # ONNX export
-onnx-simplifier>=0.3.6 # ONNX simplifier
+# JIMM BEGIN - this doesn't install on MacOS
+#onnx-simplifier>=0.3.6 # ONNX simplifier
+# JIMM END
 thop  # FLOPs computation
 # pytorch_quantization>=2.1.1
 
+# JIMM BEGIN
 matplotlib>=3.2.2
 Pillow>=7.1.2
 requests>=2.23.0
@@ -25,9 +28,8 @@ seaborn>=0.11.0
 
 setuptools==59.5.0
 
-# JIMM BEGIN
 # torch-ort-infer==1.12.0
-# JIMM END
 # openvino==2022.1.0
 # openvino-dev==2022.1.0
 # openvino-telemetry==2022.1.0
+# JIMM END

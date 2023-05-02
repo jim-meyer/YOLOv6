@@ -557,8 +557,6 @@ class DetectBackend(nn.Module):
         from yolov6.utils.checkpoint import load_checkpoint
         model = load_checkpoint(weights, map_location=device)
         stride = int(model.stride.max())
-        # if ORT_AVAILABLE:
-        #     model = ORTInferenceModule(model)
         self.__dict__.update(locals())  # assign all variables to self
 
     def forward(self, im, val=False):
