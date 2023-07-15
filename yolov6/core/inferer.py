@@ -92,10 +92,16 @@ class Inferer:
                 txt_path = osp.join(save_dir, self.webcam_addr)
             else:
                 # Create output files in nested dirs that mirrors the structure of the images' dirs
-                rel_path = osp.relpath(osp.dirname(img_path), osp.dirname(self.source))
+                # JIMM BEGIN
+                rel_path = osp.relpath(osp.dirname(img_path), self.source)
+                # rel_path = osp.relpath(osp.dirname(img_path), osp.dirname(self.source))
+                # JIMM END
                 save_path = osp.join(save_dir, rel_path, osp.basename(img_path))  # im.jpg
-                txt_path = osp.join(save_dir, rel_path, 'labels', osp.splitext(osp.basename(img_path))[0])
+                # JIMM BEGIN
+                txt_path = osp.join(save_dir, rel_path, osp.splitext(osp.basename(img_path))[0])
+                # txt_path = osp.join(save_dir, rel_path, 'labels', osp.splitext(osp.basename(img_path))[0])
                 os.makedirs(osp.join(save_dir, rel_path), exist_ok=True)
+                # JIMM END
 
             gn = torch.tensor(img_src.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             img_ori = img_src.copy()
