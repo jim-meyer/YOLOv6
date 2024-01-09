@@ -7,15 +7,17 @@
 FROM nvcr.io/nvidia/pytorch:21.05-py3
 
 # Install linux packages
-RUN apt update && apt install -y zip htop screen libgl1-mesa-glx
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt update && apt install -y zip htop screen libgl1-mesa-glx
 
 # Install python dependencies
-RUN python -m pip install --upgrade pip && \
+RUN --mount=type=cache,target=/root/.cache python -m pip install --upgrade pip && \
     mkdir /YOLOv6
 WORKDIR /YOLOv6
 
 COPY requirements.txt .
-RUN pip install --no-cache -r requirements.txt && \
+RUN --mount=type=cache,target=/root/.cache pip install -r requirements.txt && \
     rm requirements.txt
 
 # Install OpenVino dependencies so we can use Neural Compute Stick via `torch-ort-infer` package
