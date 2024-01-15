@@ -20,7 +20,7 @@ scipy>=1.4.1
 tqdm>=4.41.0
 addict>=2.4.0
 tensorboard>=2.7.0
-pycocotools>=2.0
+pycocotools==2.0.7
 onnx>=1.10.0  # ONNX export
 # JIMM BEGIN - this doesn't install on MacOS
 #onnx-simplifier>=0.3.6 # ONNX simplifier
