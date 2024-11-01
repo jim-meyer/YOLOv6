@@ -108,7 +108,32 @@ class Inferer:
 
             # check image and font
             assert img_ori.data.contiguous, 'Image needs to be contiguous. Please apply to input images with np.ascontiguousarray(im).'
-            self.font_check()
+            # Disabled since the call to `font.exists()` causes an exception:
+            # Traceback (most recent call last):
+            #   File "tools/infer.py", line 120, in <module>
+            #     main(args)
+            #   File "tools/infer.py", line 115, in main
+            #     run(**vars(args))
+            #   File "/opt/conda/lib/python3.8/site-packages/torch/autograd/grad_mode.py", line 28, in decorate_context
+            #     return func(*args, **kwargs)
+            #   File "tools/infer.py", line 108, in run
+            #     inferer.infer(conf_thres, iou_thres, classes, agnostic_nms, max_det, save_dir, save_txt, not not_save_img, hide_labels, hide_conf, view_img)
+            #   File "/home/ubuntu/git-oss/YOLOv6/yolov6/core/inferer.py", line 111, in infer
+            #     self.font_check()
+            #   File "/home/ubuntu/git-oss/YOLOv6/yolov6/core/inferer.py", line 293, in font_check
+            #     return ImageFont.truetype(str(font), size)
+            #   File "/opt/conda/lib/python3.8/site-packages/PIL/ImageFont.py", line 853, in truetype
+            #     return freetype(font)
+            #   File "/opt/conda/lib/python3.8/site-packages/PIL/ImageFont.py", line 850, in freetype
+            #     return FreeTypeFont(font, size, index, encoding, layout_engine)
+            #   File "/opt/conda/lib/python3.8/site-packages/PIL/ImageFont.py", line 173, in __init__
+            #     freetype_version = parse_version(features.version_module("freetype2"))
+            #   File "/opt/conda/lib/python3.8/site-packages/packaging/version.py", line 49, in parse
+            #     return Version(version)
+            #   File "/opt/conda/lib/python3.8/site-packages/packaging/version.py", line 264, in __init__
+            #     match = self._regex.search(version)
+            # TypeError: expected string or bytes-like object
+            # self.font_check()
 
             if len(det):
                 det[:, :4] = self.rescale(img.shape[2:], det[:, :4], img_src.shape).round()

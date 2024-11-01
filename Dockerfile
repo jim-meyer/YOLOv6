@@ -4,7 +4,7 @@
 
 # Start FROM Nvidia PyTorch image https://ngc.nvidia.com/catalog/containers/nvidia:pytorch
 # CUDA: 11.3
-FROM nvcr.io/nvidia/pytorch:21.05-py3
+FROM nvcr.io/nvidia/pytorch:21.12-py3
 
 # Install linux packages
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
