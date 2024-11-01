@@ -1,5 +1,5 @@
 build_containers:
-	docker-compose build yolov6
+	docker build -t yolov6-yolov6 .
 
 download_yolov6_weights:
 	mkdir -p weights
