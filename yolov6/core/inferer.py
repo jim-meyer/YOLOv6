@@ -77,6 +77,9 @@ class Inferer:
         num_processed = 0
         # JIMM END
         for img_src, img_path, vid_cap in tqdm(self.files):
+            if img_src is None:
+                LOGGER.error(f'Skipping image at {img_path}: could not read it')
+                continue
             img, img_src = self.process_image(img_src, self.img_size, self.stride, self.half)
             img = img.to(self.device)
             if len(img.shape) == 3:
